@@ -1,4 +1,4 @@
-# Understanding Reuse, Performance, and Hardware Cost of DNN Dataflows: A Data-Centric Approach Using MAESTRO
+# Understanding Reuse, Performance, and Hardware Cost of DNN Dataflows: A Data-Centric Approach
 
 ## Paper Information
 Hyoukjun Kwon, Prasanth Chatarasi, Michael Pellauer, Angshuman Parashar, Vivek Sarkar, and Tushar Krishna. 2019. Understanding Reuse, Performance, and Hardware Cost of DNN Dataflow: A Data-Centric Approach. In Proceedings of the 52nd Annual IEEE/ACM International Symposium on Microarchitecture **(MICRO '52)**. Association for Computing Machinery, New York, NY, USA, 754–768. DOI:https://doi.org/10.1145/3352460.3358252
