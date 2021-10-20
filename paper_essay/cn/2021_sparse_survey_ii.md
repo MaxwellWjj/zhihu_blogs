@@ -37,7 +37,7 @@ Data Extraction可以看作是Sparsity Encoding的逆过程。加速器从片外
 ### **常见的编码方案**
 
 #### **1) COO**
-
+Coordinate (COO) 编码中，metadata存储了NZ的绝对位置（即其在原tensor中的坐标）
 #### **2) RLC**
 
 #### **3) Bitmap**
