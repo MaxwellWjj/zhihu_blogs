@@ -35,10 +35,23 @@ Data Extraction可以看作是Sparsity Encoding的逆过程。加速器从片外
 一个稀疏张量可以被压缩编码，从而跳过零值，减少数据量。通常来说一个编码后的tensor包含实际值(data，即原tensor中的NZ)和元值（metadata，即原tensor中NZ的位置信息）。加速器得到metadata信息后，可以通过Data Extraction来获取NZ之间的匹配信息，从而进行NZ的IA×W+PSUM（输入值×权重+部分和），跳过零值计算。下面将简略介绍各种常见的编码方案。
 
 ### **常见的编码方案**
+图1列举了学术界常见的一些sparse tensor编码方案。图1(a)是原sparse tensor的值，在这里取tensor的维度为2，即一个矩阵，其中有4个NZ和5个零值。
+
+![sparse tensor编码方案示意图，引用自[1]](https://pic4.zhimg.com/80/v2-b5c88e4e80d0ecf903bc06a54c81b117.png)
 
 #### **1) COO**
-Coordinate (COO) 编码中，metadata存储了NZ的绝对位置（即其在原tensor中的坐标）
+Coordinate (COO) 编码中，metadata存储了NZ的绝对位置（即其在原tensor中的坐标）,加速器的运算单元可以直接获取其位置信息而不需要进一步的解码。图1(b)展示了COO编码的例子，使用了两个维度的index来存储metadata，可见其效率不高。根据论文分析，假设NZ的数量为NNZ (Number of NZ)，则hardware storage overhead可以由下式近似计算得到：
+
+$$NNZ \times \sum_{1}^{n}\left\lceil\log_{2} d_{i}\right\rceil$$
+
+为了节省COO编码的metadata存储开销，有工作提出将位置坐标展开（flatten）成一维的位置信息，如图1(c)所示。这种编码方式在tensor维度较低，规模较小的情况下能够节约很大的空间，但倘若tensor规模较大，则其一维展开之后的metadata需要较宽的寄存器来存储，会造成更大的开销（注意，开销按bit计算）。这种编码方式下的storage overhead可以表示为：
+
+$$
+N N Z \times\left\lceil\log _{2} \prod_{1}^{n} d_{i}\right\rceil
+$$
+
 #### **2) RLC**
+RLC编码的全称为Run-Length Coding。简单表述这种编码方式为：metadata储存的值为flatten操作后的相邻两个NZ之间的距离（即中间有多少个零值）。如图1(d)所示，2和3之间隔了一个零值，那么metadata的第二个数为1，3和5之间在flatten操作后是相邻的，因此对应的第三个数位0，以此类推。笔者认为这种方案适合“串行读取&处理”的方案，例如PE需要串行地将2，3，5，7依次取出，参与MAC运算，因为地址生成器可以根据metadata的值直接在当前地址上累加。RLC编码的storage overhead取决于两个非零值之间可能出现的最长距离，因此不好直接给出表达式。对于大规模且稀疏度非常高的tensor（两个NZ相隔非常远），RLC编码方式需要进行改进，否则将占用很大的开销。
 
 #### **3) Bitmap**
 
@@ -47,3 +60,7 @@ Coordinate (COO) 编码中，metadata存储了NZ的绝对位置（即其在原te
 #### **5) CSF**
 
 #### **6) Structured Sparsity**
+
+## 参考文献
+
+[1] S. Dave, R. Baghdadi, T. Nowatzki, S. Avancha, A. Shrivastava and B. Li, "Hardware Acceleration of Sparse and Irregular Tensor Computations of ML Models: A Survey and Insights," in *Proceedings of the IEEE*, vol. 109, no. 10, pp. 1706-1752, Oct. 2021.
